@@ -42,11 +42,11 @@ Next.js 16 + Supabaseで構築。
 ```tsx
 // Server Component（デフォルト）
 interface Props {
-  title: string
+    title: string
 }
 
-export function AboutSection({ title }: Props) {
-  return <section>{title}</section>
+export function AboutSection({title}: Props) {
+    return <section>{title}</section>
 }
 ```
 
@@ -54,15 +54,15 @@ export function AboutSection({ title }: Props) {
 // Client Component（インタラクティブな場合のみ）
 "use client"
 
-import { useState } from "react"
+import {useState} from "react"
 
 interface Props {
-  initialCount: number
+    initialCount: number
 }
 
-export function Counter({ initialCount }: Props) {
-  const [count, setCount] = useState(initialCount)
-  return <button onClick={() => setCount(c => c + 1)}>{count}</button>
+export function Counter({initialCount}: Props) {
+    const [count, setCount] = useState(initialCount)
+    return <button onClick={() => setCount(c => c + 1)}>{count}</button>
 }
 ```
 
@@ -73,17 +73,18 @@ export function Counter({ initialCount }: Props) {
 
 ```tsx
 // BAD: any や型なし
-function Card({ data }: any) { ... }
+function Card({data}: any) { ...
+}
 
 // GOOD: interface で明示的に型定義
 interface Props {
-  title: string
-  description: string
-  isVisible?: boolean
+    title: string
+    description: string
+    isVisible?: boolean
 }
 
-export function Card({ title, description, isVisible = false }: Props) {
-  ...
+export function Card({title, description, isVisible = false}: Props) {
+...
 }
 ```
 
@@ -95,8 +96,8 @@ export function Card({ title, description, isVisible = false }: Props) {
 ### 6. Test
 
 - テスティングトロフィーを意識したテスト設計を行う
-  - E2Eは機能を絞って実装すること
-  - 統合テストとユニットテストを主に実装すること
+    - E2Eは機能を絞って実装すること
+    - 統合テストとユニットテストを主に実装すること
 
 ## Quality
 
