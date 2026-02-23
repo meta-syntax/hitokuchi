@@ -21,6 +21,9 @@ const eslintConfig = defineConfig([
     rules: {
       "@stylistic/semi": ["error", "never"],
       "@stylistic/object-curly-spacing": ["error", "always"],
+      "@stylistic/indent": ["error", 2],
+      "@stylistic/brace-style": ["error", "1tbs"],
+      "curly": ["error", "all"],
     },
   },
 ])

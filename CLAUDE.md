@@ -12,6 +12,7 @@ Next.js 16 + Supabaseで構築。
 - Next.js 16 (App Router) + React 19
 - TypeScript
 - Tailwind CSS v4
+- shadcn/ui
 
 ## Architecture
 
