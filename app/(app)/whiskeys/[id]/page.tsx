@@ -1,9 +1,13 @@
 import { notFound } from "next/navigation"
+import { createClient } from "@/lib/supabase/server"
 import { getWhiskey } from "@/services/whiskeys"
 import { getReviewsByWhiskey } from "@/services/reviews"
+import { getBookmark } from "@/services/bookmarks"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Separator } from "@/components/ui/separator"
+import { BookmarkButton } from "./_components/BookmarkButton"
+import { ReviewForm } from "./_components/ReviewForm"
 
 const drinkingStyleLabel: Record<string, string> = {
   straight: "ストレート",
@@ -32,13 +36,22 @@ export default async function WhiskeyDetailPage({ params }: Props) {
 
   const reviews = await getReviewsByWhiskey(id)
 
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  const bookmark = user ? await getBookmark(user.id, id) : null
+
   return (
     <div>
       <div className="mb-8">
-        <h1 className="text-2xl font-bold">{whiskey.name}</h1>
-        {whiskey.name_en && (
-          <p className="text-sm text-muted-foreground">{whiskey.name_en}</p>
-        )}
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <h1 className="text-2xl font-bold">{whiskey.name}</h1>
+            {whiskey.name_en && (
+              <p className="text-sm text-muted-foreground">{whiskey.name_en}</p>
+            )}
+          </div>
+          <BookmarkButton whiskeyId={id} initialBookmarked={!!bookmark} />
+        </div>
         <div className="mt-3 flex flex-wrap gap-2">
           <Badge variant="secondary">{whiskey.type}</Badge>
           <Badge variant="outline">{whiskey.distillery}</Badge>
@@ -57,9 +70,9 @@ export default async function WhiskeyDetailPage({ params }: Props) {
       </h2>
 
       {reviews.length === 0 ? (
-        <p className="text-sm text-muted-foreground">まだレビューがありません。</p>
+        <p className="mb-6 text-sm text-muted-foreground">まだレビューがありません。</p>
       ) : (
-        <div className="grid gap-4">
+        <div className="mb-6 grid gap-4">
           {reviews.map((review) => (
             <Card key={review.id}>
               <CardHeader>
@@ -89,6 +102,10 @@ export default async function WhiskeyDetailPage({ params }: Props) {
           ))}
         </div>
       )}
+
+      <Separator className="mb-8" />
+
+      <ReviewForm whiskeyId={id} isLoggedIn={!!user} />
     </div>
   )
 }
