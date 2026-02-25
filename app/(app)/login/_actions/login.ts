@@ -14,5 +14,5 @@ export async function login(formData: FormData) {
     return { error: "メールアドレスまたはパスワードが正しくありません。" }
   }
 
-  redirect("/")
+  redirect("/dashboard")
 }

@@ -10,6 +10,7 @@ import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Separator } from "@/components/ui/separator"
 import { ProfileEditForm } from "./_components/ProfileEditForm"
+import { ThemeToggle } from "./_components/ThemeToggle"
 
 export default function MyPage() {
   return (
@@ -75,6 +76,15 @@ async function MyPageContent() {
           initialAvatarUrl={profile?.avatar_url ?? ""}
         />
       </div>
+
+      <Card className="mb-8">
+        <CardHeader>
+          <CardTitle className="text-base">テーマ設定</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <ThemeToggle />
+        </CardContent>
+      </Card>
 
       <Separator className="mb-8" />
 

@@ -1,4 +1,6 @@
+import { Suspense } from "react"
 import Link from "next/link"
+import { createClient } from "@/lib/supabase/server"
 import { Button } from "@/components/ui/button"
 import { Header } from "@/components/layout/Header"
 import { Footer } from "@/components/layout/Footer"
@@ -21,9 +23,15 @@ export default function Home() {
             <Button asChild size="lg">
               <Link href="/whiskeys">ウイスキーを探す</Link>
             </Button>
-            <Button asChild variant="outline" size="lg">
-              <Link href="/login">はじめる</Link>
-            </Button>
+            <Suspense
+              fallback={
+                <Button variant="outline" size="lg" disabled>
+                  はじめる
+                </Button>
+              }
+            >
+              <AuthCTA />
+            </Suspense>
           </div>
         </section>
 
@@ -55,5 +63,24 @@ export default function Home() {
       </main>
       <Footer />
     </>
+  )
+}
+
+async function AuthCTA() {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+
+  if (user) {
+    return (
+      <Button asChild variant="outline" size="lg">
+        <Link href="/dashboard">ダッシュボード</Link>
+      </Button>
+    )
+  }
+
+  return (
+    <Button asChild variant="outline" size="lg">
+      <Link href="/login">はじめる</Link>
+    </Button>
   )
 }

@@ -5,6 +5,24 @@ import { createCacheClient } from '@/lib/supabase/cache'
 import { createClient } from '@/lib/supabase/server'
 import type { TablesInsert, TablesUpdate } from '@/types/database'
 
+export async function getRecentReviews(limit = 5) {
+  'use cache'
+  cacheLife('hours')
+  cacheTag('recent-reviews')
+
+  const supabase = createCacheClient()
+  const { data, error } = await supabase
+    .from('reviews')
+    .select('*, profiles(display_name, avatar_url), whiskeys(id, name)')
+    .order('created_at', { ascending: false })
+    .limit(limit)
+
+  if (error) {
+    throw error
+  }
+  return data
+}
+
 export async function getReviewsByWhiskey(whiskeyId: string) {
   'use cache'
   cacheLife('hours')

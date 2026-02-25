@@ -1,3 +1,4 @@
+import { Suspense } from "react"
 import { notFound } from "next/navigation"
 import { createClient } from "@/lib/supabase/server"
 import { getWhiskey } from "@/services/whiskeys"
@@ -6,6 +7,7 @@ import { getBookmark } from "@/services/bookmarks"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Separator } from "@/components/ui/separator"
+import { Skeleton } from "@/components/ui/skeleton"
 import { BookmarkButton } from "./_components/BookmarkButton"
 import { ReviewForm } from "./_components/ReviewForm"
 
@@ -26,7 +28,15 @@ interface Props {
   params: Promise<{ id: string }>
 }
 
-export default async function WhiskeyDetailPage({ params }: Props) {
+export default function WhiskeyDetailPage({ params }: Props) {
+  return (
+    <Suspense fallback={<WhiskeyDetailSkeleton />}>
+      <WhiskeyDetailContent params={params} />
+    </Suspense>
+  )
+}
+
+async function WhiskeyDetailContent({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
   const whiskey = await getWhiskey(id)
 
@@ -106,6 +116,28 @@ export default async function WhiskeyDetailPage({ params }: Props) {
       <Separator className="mb-8" />
 
       <ReviewForm whiskeyId={id} isLoggedIn={!!user} />
+    </div>
+  )
+}
+
+function WhiskeyDetailSkeleton() {
+  return (
+    <div>
+      <div className="mb-8">
+        <Skeleton className="mb-2 h-8 w-48" />
+        <Skeleton className="h-4 w-32" />
+        <div className="mt-3 flex gap-2">
+          <Skeleton className="h-5 w-16 rounded-full" />
+          <Skeleton className="h-5 w-20 rounded-full" />
+          <Skeleton className="h-5 w-16 rounded-full" />
+        </div>
+      </div>
+      <Separator className="mb-8" />
+      <Skeleton className="mb-4 h-6 w-32" />
+      <div className="grid gap-4">
+        <Skeleton className="h-28 w-full rounded-lg" />
+        <Skeleton className="h-28 w-full rounded-lg" />
+      </div>
     </div>
   )
 }
