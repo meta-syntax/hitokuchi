@@ -28,9 +28,11 @@ async function MyPageContent() {
     redirect("/login")
   }
 
-  const profile = await getProfile(user.id)
-  const reviews = await getReviewsByUser(user.id)
-  const bookmarks = await getBookmarksByUser(user.id)
+  const [profile, reviews, bookmarks] = await Promise.all([
+    getProfile(user.id),
+    getReviewsByUser(user.id),
+    getBookmarksByUser(user.id),
+  ])
 
   return (
     <div>
@@ -71,7 +73,6 @@ async function MyPageContent() {
 
       <div className="mb-8">
         <ProfileEditForm
-          userId={user.id}
           initialDisplayName={profile?.display_name ?? ""}
           initialAvatarUrl={profile?.avatar_url ?? ""}
         />

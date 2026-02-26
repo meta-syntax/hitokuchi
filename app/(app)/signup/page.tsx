@@ -2,12 +2,20 @@
 
 import { useState } from "react"
 import Link from "next/link"
+import { z } from "zod"
 import { createClient } from "@/lib/supabase/client"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Label } from "@/components/ui/label"
 import { Alert, AlertDescription } from "@/components/ui/alert"
+
+const signupSchema = z.object({
+  email: z.email("有効なメールアドレスを入力してください。"),
+  password: z
+    .string()
+    .min(6, "パスワードは6文字以上で入力してください。"),
+})
 
 export default function SignupPage() {
   const [email, setEmail] = useState("")
@@ -16,21 +24,22 @@ export default function SignupPage() {
   const [loading, setLoading] = useState(false)
   const [success, setSuccess] = useState(false)
 
-  const handleSignup = async (e: React.FormEvent) => {
+  const handleSignup = async (e: React.SubmitEvent) => {
     e.preventDefault()
     setError("")
     setLoading(true)
 
-    if (password.length < 6) {
-      setError("パスワードは6文字以上で入力してください。")
+    const result = signupSchema.safeParse({ email, password })
+    if (!result.success) {
+      setError(result.error.issues[0].message)
       setLoading(false)
       return
     }
 
     const supabase = createClient()
     const { error } = await supabase.auth.signUp({
-      email,
-      password,
+      email: result.data.email,
+      password: result.data.password,
       options: {
         emailRedirectTo: `${location.origin}/api/auth/callback`,
       },

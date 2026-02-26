@@ -8,6 +8,7 @@
     "start": "next start",
     "lint": "eslint",
     "type-check": "tsc --noEmit",
+    "scan:suggestions": "node scripts/extract-suggestion-diagnostics.js",
     "db:migrate": "supabase db push",
     "db:reset": "supabase db reset",
     "db:gen-types": "supabase gen types typescript --linked > ./types/database.ts"
@@ -24,7 +25,8 @@
     "react": "19.2.3",
     "react-dom": "19.2.3",
     "server-only": "^0.0.1",
-    "tailwind-merge": "^3.5.0"
+    "tailwind-merge": "^3.5.0",
+    "zod": "^4.3.6"
   },
   "devDependencies": {
     "@stylistic/eslint-plugin": "^5.9.0",

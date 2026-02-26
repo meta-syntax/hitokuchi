@@ -10,19 +10,7 @@ import { Separator } from "@/components/ui/separator"
 import { Skeleton } from "@/components/ui/skeleton"
 import { BookmarkButton } from "./_components/BookmarkButton"
 import { ReviewForm } from "./_components/ReviewForm"
-
-const drinkingStyleLabel: Record<string, string> = {
-  straight: "ストレート",
-  rock: "ロック",
-  highball: "ハイボール",
-  mizuwari: "水割り",
-}
-
-const wouldRepeatLabel: Record<string, string> = {
-  yes: "また飲みたい",
-  maybe: "機会があれば",
-  no: "一度でいいかな",
-}
+import { DRINKING_STYLE_LABEL, WOULD_REPEAT_LABEL } from "@/lib/constants"
 
 interface Props {
   params: Promise<{ id: string }>
@@ -44,11 +32,12 @@ async function WhiskeyDetailContent({ params }: { params: Promise<{ id: string }
     notFound()
   }
 
-  const reviews = await getReviewsByWhiskey(id)
-
-  const supabase = await createClient()
+  const supabasePromise = createClient()
+  const [reviews, supabase] = await Promise.all([
+    getReviewsByWhiskey(id),
+    supabasePromise,
+  ])
   const { data: { user } } = await supabase.auth.getUser()
-  const bookmark = user ? await getBookmark(user.id, id) : null
 
   return (
     <div>
@@ -60,7 +49,9 @@ async function WhiskeyDetailContent({ params }: { params: Promise<{ id: string }
               <p className="text-sm text-muted-foreground">{whiskey.name_en}</p>
             )}
           </div>
-          <BookmarkButton whiskeyId={id} initialBookmarked={!!bookmark} />
+          <Suspense fallback={<Skeleton className="h-8 w-28" />}>
+            <BookmarkButtonWrapper whiskeyId={id} userId={user?.id} />
+          </Suspense>
         </div>
         <div className="mt-3 flex flex-wrap gap-2">
           <Badge variant="secondary">{whiskey.type}</Badge>
@@ -89,7 +80,7 @@ async function WhiskeyDetailContent({ params }: { params: Promise<{ id: string }
                 <CardTitle className="flex items-center gap-2 text-base">
                   <span>{"★".repeat(review.rating)}</span>
                   <span className="text-sm text-muted-foreground">
-                    {review.drinking_style && drinkingStyleLabel[review.drinking_style]}
+                    {review.drinking_style && DRINKING_STYLE_LABEL[review.drinking_style]}
                   </span>
                 </CardTitle>
               </CardHeader>
@@ -103,7 +94,7 @@ async function WhiskeyDetailContent({ params }: { params: Promise<{ id: string }
                   ))}
                   {review.would_repeat && (
                     <Badge variant="outline" className="text-xs">
-                      {wouldRepeatLabel[review.would_repeat]}
+                      {WOULD_REPEAT_LABEL[review.would_repeat]}
                     </Badge>
                   )}
                 </div>
@@ -118,6 +109,11 @@ async function WhiskeyDetailContent({ params }: { params: Promise<{ id: string }
       <ReviewForm whiskeyId={id} isLoggedIn={!!user} />
     </div>
   )
+}
+
+async function BookmarkButtonWrapper({ whiskeyId, userId }: { whiskeyId: string; userId?: string }) {
+  const bookmark = userId ? await getBookmark(userId, whiskeyId) : null
+  return <BookmarkButton whiskeyId={whiskeyId} initialBookmarked={!!bookmark} />
 }
 
 function WhiskeyDetailSkeleton() {

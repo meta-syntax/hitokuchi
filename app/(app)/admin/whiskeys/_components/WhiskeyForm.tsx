@@ -1,8 +1,6 @@
 "use client"
 
 import { useState, useTransition } from "react"
-import { useRouter } from "next/navigation"
-import { createClient } from "@/lib/supabase/client"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
@@ -10,23 +8,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Alert, AlertDescription } from "@/components/ui/alert"
-
-const typeOptions = [
-  "シングルモルト",
-  "ブレンデッド",
-  "バーボン",
-  "ライ",
-  "アイリッシュ",
-  "ジャパニーズ",
-  "その他",
-]
-
-const priceRangeOptions = [
-  { value: "low", label: "$ (〜3,000円)" },
-  { value: "medium", label: "$$ (3,000〜6,000円)" },
-  { value: "high", label: "$$$ (6,000〜15,000円)" },
-  { value: "premium", label: "$$$$ (15,000円〜)" },
-]
+import { WHISKEY_TYPE_OPTIONS, PRICE_RANGE_OPTIONS } from "@/lib/constants"
+import { createWhiskeyAction, updateWhiskeyAction } from "../_actions/whiskey"
 
 interface WhiskeyData {
   id?: string
@@ -42,17 +25,17 @@ interface WhiskeyData {
 
 interface Props {
   initialData?: WhiskeyData
-  onClose: () => void
+  onCancel: () => void
+  onSave: (data: WhiskeyData) => void
 }
 
-export function WhiskeyForm({ initialData, onClose }: Props) {
-  const router = useRouter()
+export function WhiskeyForm({ initialData, onCancel, onSave }: Props) {
   const [isPending, startTransition] = useTransition()
   const [error, setError] = useState("")
   const [form, setForm] = useState<WhiskeyData>({
     name: initialData?.name ?? "",
     name_en: initialData?.name_en ?? "",
-    type: initialData?.type ?? typeOptions[0],
+    type: initialData?.type ?? WHISKEY_TYPE_OPTIONS[0],
     distillery: initialData?.distillery ?? "",
     country: initialData?.country ?? "",
     abv: initialData?.abv ?? "",
@@ -64,7 +47,7 @@ export function WhiskeyForm({ initialData, onClose }: Props) {
     setForm((prev) => ({ ...prev, [field]: value }))
   }
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = (e: React.SubmitEvent) => {
     e.preventDefault()
     setError("")
 
@@ -73,7 +56,6 @@ export function WhiskeyForm({ initialData, onClose }: Props) {
       return
     }
 
-    const supabase = createClient()
     const payload = {
       name: form.name,
       name_en: form.name_en || null,
@@ -85,29 +67,18 @@ export function WhiskeyForm({ initialData, onClose }: Props) {
       description: form.description || null,
     }
 
-    if (initialData?.id) {
-      const { error: updateError } = await supabase
-        .from("whiskeys")
-        .update(payload)
-        .eq("id", initialData.id)
+    startTransition(async () => {
+      const { error: actionError } = initialData?.id
+        ? await updateWhiskeyAction(initialData.id, payload)
+        : await createWhiskeyAction(payload)
 
-      if (updateError) {
-        setError("更新に失敗しました。")
+      if (actionError) {
+        setError(initialData?.id ? "更新に失敗しました。" : "追加に失敗しました。")
         return
       }
-    } else {
-      const { error: insertError } = await supabase
-        .from("whiskeys")
-        .insert(payload)
 
-      if (insertError) {
-        setError("追加に失敗しました。")
-        return
-      }
-    }
-
-    onClose()
-    startTransition(() => router.refresh())
+      onSave(form)
+    })
   }
 
   return (
@@ -147,7 +118,7 @@ export function WhiskeyForm({ initialData, onClose }: Props) {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  {typeOptions.map((t) => (
+                  {WHISKEY_TYPE_OPTIONS.map((t) => (
                     <SelectItem key={t} value={t}>{t}</SelectItem>
                   ))}
                 </SelectContent>
@@ -192,7 +163,7 @@ export function WhiskeyForm({ initialData, onClose }: Props) {
                 <SelectValue placeholder="未設定" />
               </SelectTrigger>
               <SelectContent>
-                {priceRangeOptions.map((p) => (
+                {PRICE_RANGE_OPTIONS.map((p) => (
                   <SelectItem key={p.value} value={p.value}>{p.label}</SelectItem>
                 ))}
               </SelectContent>
@@ -218,7 +189,7 @@ export function WhiskeyForm({ initialData, onClose }: Props) {
             <Button type="submit" size="sm" disabled={isPending}>
               {isPending ? "保存中..." : initialData?.id ? "更新" : "追加"}
             </Button>
-            <Button type="button" variant="ghost" size="sm" onClick={onClose}>
+            <Button type="button" variant="ghost" size="sm" onClick={onCancel}>
               キャンセル
             </Button>
           </div>

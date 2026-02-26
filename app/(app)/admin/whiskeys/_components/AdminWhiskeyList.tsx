@@ -2,26 +2,26 @@
 
 import { useState, useTransition } from "react"
 import { useRouter } from "next/navigation"
-import { createClient } from "@/lib/supabase/client"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog"
 import { WhiskeyForm } from "./WhiskeyForm"
-
-interface Whiskey {
-  id: string
-  name: string
-  name_en: string | null
-  type: string
-  distillery: string | null
-  country: string
-  abv: number | null
-  price_range: string | null
-  description: string | null
-}
+import { deleteWhiskeyAction } from "../_actions/whiskey"
+import type { Tables } from "@/types/database"
 
 interface Props {
-  whiskeys: Whiskey[]
+  whiskeys: Tables<"whiskeys">[]
 }
 
 export function AdminWhiskeyList({ whiskeys }: Props) {
@@ -29,21 +29,63 @@ export function AdminWhiskeyList({ whiskeys }: Props) {
   const [isPending, startTransition] = useTransition()
   const [showCreateForm, setShowCreateForm] = useState(false)
   const [editingId, setEditingId] = useState<string | null>(null)
-  const [deletingId, setDeletingId] = useState<string | null>(null)
+  const [optimisticUpdates, setOptimisticUpdates] = useState<
+    Record<string, Partial<Tables<"whiskeys">>>
+  >({})
+  const [prevWhiskeys, setPrevWhiskeys] = useState(whiskeys)
 
-  const handleDelete = async (id: string) => {
-    const supabase = createClient()
-    const { error } = await supabase
-      .from("whiskeys")
-      .delete()
-      .eq("id", id)
+  // サーバーから新しいデータが届いたら楽観的更新をクリア
+  if (prevWhiskeys !== whiskeys) {
+    setPrevWhiskeys(whiskeys)
+    setOptimisticUpdates({})
+  }
 
-    if (error) {
-      alert("削除に失敗しました。")
-      return
+  const displayWhiskeys = whiskeys.map((w) => {
+    const update = optimisticUpdates[w.id]
+    return update ? { ...w, ...update } : w
+  })
+
+  const handleDelete = (id: string) => {
+    startTransition(async () => {
+      const { error } = await deleteWhiskeyAction(id)
+      if (error) {
+        return
+      }
+      router.refresh()
+    })
+  }
+
+  const handleEditSave = (data: {
+    name: string
+    name_en: string
+    type: string
+    distillery: string
+    country: string
+    abv: string
+    price_range: string
+    description: string
+  }) => {
+    if (editingId) {
+      setOptimisticUpdates((prev) => ({
+        ...prev,
+        [editingId]: {
+          name: data.name,
+          name_en: data.name_en || null,
+          type: data.type,
+          distillery: data.distillery || null,
+          country: data.country,
+          abv: data.abv ? parseFloat(data.abv) : null,
+          price_range: data.price_range || null,
+          description: data.description || null,
+        },
+      }))
     }
+    setEditingId(null)
+    startTransition(() => router.refresh())
+  }
 
-    setDeletingId(null)
+  const handleCreateSave = () => {
+    setShowCreateForm(false)
     startTransition(() => router.refresh())
   }
 
@@ -57,14 +99,17 @@ export function AdminWhiskeyList({ whiskeys }: Props) {
       </div>
 
       {showCreateForm && (
-        <WhiskeyForm onClose={() => setShowCreateForm(false)} />
+        <WhiskeyForm
+          onCancel={() => setShowCreateForm(false)}
+          onSave={handleCreateSave}
+        />
       )}
 
       {whiskeys.length === 0 ? (
         <p className="text-muted-foreground">ウイスキーがまだ登録されていません。</p>
       ) : (
         <div className="grid gap-3">
-          {whiskeys.map((w) => (
+          {displayWhiskeys.map((w) => (
             <div key={w.id}>
               {editingId === w.id ? (
                 <WhiskeyForm
@@ -79,7 +124,8 @@ export function AdminWhiskeyList({ whiskeys }: Props) {
                     price_range: w.price_range ?? "",
                     description: w.description ?? "",
                   }}
-                  onClose={() => setEditingId(null)}
+                  onCancel={() => setEditingId(null)}
+                  onSave={handleEditSave}
                 />
               ) : (
                 <Card>
@@ -94,33 +140,30 @@ export function AdminWhiskeyList({ whiskeys }: Props) {
                         >
                           編集
                         </Button>
-                        {deletingId === w.id ? (
-                          <div className="flex items-center gap-1">
-                            <Button
-                              variant="destructive"
-                              size="sm"
-                              onClick={() => handleDelete(w.id)}
-                              disabled={isPending}
-                            >
-                              確認
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <Button variant="destructive" size="sm">
+                              削除
                             </Button>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => setDeletingId(null)}
-                            >
-                              取消
-                            </Button>
-                          </div>
-                        ) : (
-                          <Button
-                            variant="destructive"
-                            size="sm"
-                            onClick={() => setDeletingId(w.id)}
-                          >
-                            削除
-                          </Button>
-                        )}
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>本当に削除しますか？</AlertDialogTitle>
+                              <AlertDialogDescription>
+                                「{w.name}」を削除します。この操作は取り消せません。
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>キャンセル</AlertDialogCancel>
+                              <AlertDialogAction
+                                onClick={() => handleDelete(w.id)}
+                                disabled={isPending}
+                              >
+                                削除する
+                              </AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
                       </div>
                     </div>
                   </CardHeader>

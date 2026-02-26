@@ -2,8 +2,8 @@
 
 import { useState, useTransition } from "react"
 import { useRouter } from "next/navigation"
-import { createClient } from "@/lib/supabase/client"
 import { Button } from "@/components/ui/button"
+import { toggleBookmarkAction } from "../_actions/bookmark"
 
 interface Props {
   whiskeyId: string
@@ -16,34 +16,16 @@ export function BookmarkButton({ whiskeyId, initialBookmarked }: Props) {
   const [isPending, startTransition] = useTransition()
 
   const handleToggle = async () => {
-    const supabase = createClient()
-    const { data: { user } } = await supabase.auth.getUser()
+    const { error } = await toggleBookmarkAction(whiskeyId, bookmarked)
 
-    if (!user) {
+    if (error === "ログインが必要です。") {
       router.push("/login")
       return
     }
 
-    if (bookmarked) {
-      const { error } = await supabase
-        .from("bookmarks")
-        .delete()
-        .eq("user_id", user.id)
-        .eq("whiskey_id", whiskeyId)
-
-      if (!error) {
-        setBookmarked(false)
-        startTransition(() => router.refresh())
-      }
-    } else {
-      const { error } = await supabase
-        .from("bookmarks")
-        .insert({ user_id: user.id, whiskey_id: whiskeyId })
-
-      if (!error) {
-        setBookmarked(true)
-        startTransition(() => router.refresh())
-      }
+    if (!error) {
+      setBookmarked(!bookmarked)
+      startTransition(() => router.refresh())
     }
   }
 

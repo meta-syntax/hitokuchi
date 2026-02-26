@@ -1,14 +1,8 @@
 import Link from "next/link"
 import { getWhiskeys } from "@/services/whiskeys"
+import { PRICE_RANGE_LABEL } from "@/lib/constants"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-
-const priceRangeLabel: Record<string, string> = {
-  low: "$",
-  medium: "$$",
-  high: "$$$",
-  premium: "$$$$",
-}
 
 export default async function WhiskeysPage() {
   const whiskeys = await getWhiskeys()
@@ -34,7 +28,7 @@ export default async function WhiskeysPage() {
                     <Badge variant="secondary">{w.type}</Badge>
                     {w.abv && <Badge variant="outline">{w.abv}%</Badge>}
                     {w.price_range && (
-                      <Badge variant="outline">{priceRangeLabel[w.price_range]}</Badge>
+                      <Badge variant="outline">{PRICE_RANGE_LABEL[w.price_range]}</Badge>
                     )}
                   </div>
                 </CardContent>

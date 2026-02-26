@@ -37,32 +37,24 @@ export default function Home() {
 
         <section className="mx-auto max-w-3xl px-4 py-16">
           <div className="grid gap-8 sm:grid-cols-3">
-            <div className="text-center">
-              <div className="mb-2 text-2xl">🥃</div>
-              <h3 className="mb-1 font-semibold">ひとくちレビュー</h3>
-              <p className="text-sm text-muted-foreground">
-                味わい・飲み方・ひとことで、サクッと記録
-              </p>
-            </div>
-            <div className="text-center">
-              <div className="mb-2 text-2xl">🔖</div>
-              <h3 className="mb-1 font-semibold">ブックマーク</h3>
-              <p className="text-sm text-muted-foreground">
-                気になるウイスキーをあとでチェック
-              </p>
-            </div>
-            <div className="text-center">
-              <div className="mb-2 text-2xl">📊</div>
-              <h3 className="mb-1 font-semibold">みんなの評価</h3>
-              <p className="text-sm text-muted-foreground">
-                他のユーザーのレビューを参考にできる
-              </p>
-            </div>
+            <FeatureCard icon="🥃" title="ひとくちレビュー" description="味わい・飲み方・ひとことで、サクッと記録" />
+            <FeatureCard icon="🔖" title="ブックマーク" description="気になるウイスキーをあとでチェック" />
+            <FeatureCard icon="📊" title="みんなの評価" description="他のユーザーのレビューを参考にできる" />
           </div>
         </section>
       </main>
       <Footer />
     </>
+  )
+}
+
+function FeatureCard({ icon, title, description }: { icon: string; title: string; description: string }) {
+  return (
+    <div className="text-center">
+      <div className="mb-2 text-2xl">{icon}</div>
+      <h3 className="mb-1 font-semibold">{title}</h3>
+      <p className="text-sm text-muted-foreground">{description}</p>
+    </div>
   )
 }
 
