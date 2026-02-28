@@ -92,6 +92,7 @@ export async function createReview(
     return { data: null, error: error.message }
   }
   revalidateTag(`whiskey-reviews:${values.whiskey_id}`, 'hours')
+  revalidateTag('recent-reviews', 'hours')
   updateTag(`user-reviews:${values.user_id}`)
   return { data, error: null }
 }
@@ -114,6 +115,7 @@ export async function updateReview(
     return { data: null, error: error.message }
   }
   revalidateTag(`whiskey-reviews:${whiskeyId}`, 'hours')
+  revalidateTag('recent-reviews', 'hours')
   updateTag(`user-reviews:${userId}`)
   return { data, error: null }
 }
@@ -129,6 +131,7 @@ export async function deleteReview(id: string, userId: string, whiskeyId: string
     return { error: error.message }
   }
   revalidateTag(`whiskey-reviews:${whiskeyId}`, 'hours')
+  revalidateTag('recent-reviews', 'hours')
   updateTag(`user-reviews:${userId}`)
   return { error: null }
 }

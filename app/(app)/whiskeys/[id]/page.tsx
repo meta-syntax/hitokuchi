@@ -1,6 +1,6 @@
 import { Suspense } from "react"
 import { notFound } from "next/navigation"
-import { createClient } from "@/lib/supabase/server"
+import { getUser } from "@/lib/supabase/cache"
 import { getWhiskey } from "@/services/whiskeys"
 import { getReviewsByWhiskey } from "@/services/reviews"
 import { getBookmark } from "@/services/bookmarks"
@@ -32,12 +32,7 @@ async function WhiskeyDetailContent({ params }: { params: Promise<{ id: string }
     notFound()
   }
 
-  const supabasePromise = createClient()
-  const [reviews, supabase] = await Promise.all([
-    getReviewsByWhiskey(id),
-    supabasePromise,
-  ])
-  const { data: { user } } = await supabase.auth.getUser()
+  const reviews = await getReviewsByWhiskey(id)
 
   return (
     <div>
@@ -50,7 +45,7 @@ async function WhiskeyDetailContent({ params }: { params: Promise<{ id: string }
             )}
           </div>
           <Suspense fallback={<Skeleton className="h-8 w-28" />}>
-            <BookmarkButtonWrapper whiskeyId={id} userId={user?.id} />
+            <BookmarkButtonWrapper whiskeyId={id} />
           </Suspense>
         </div>
         <div className="mt-3 flex flex-wrap gap-2">
@@ -106,14 +101,22 @@ async function WhiskeyDetailContent({ params }: { params: Promise<{ id: string }
 
       <Separator className="mb-8" />
 
-      <ReviewForm whiskeyId={id} isLoggedIn={!!user} />
+      <Suspense fallback={<Skeleton className="h-48 w-full rounded-lg" />}>
+        <ReviewFormWrapper whiskeyId={id} />
+      </Suspense>
     </div>
   )
 }
 
-async function BookmarkButtonWrapper({ whiskeyId, userId }: { whiskeyId: string; userId?: string }) {
-  const bookmark = userId ? await getBookmark(userId, whiskeyId) : null
+async function BookmarkButtonWrapper({ whiskeyId }: { whiskeyId: string }) {
+  const user = await getUser()
+  const bookmark = user ? await getBookmark(user.id, whiskeyId) : null
   return <BookmarkButton whiskeyId={whiskeyId} initialBookmarked={!!bookmark} />
+}
+
+async function ReviewFormWrapper({ whiskeyId }: { whiskeyId: string }) {
+  const user = await getUser()
+  return <ReviewForm whiskeyId={whiskeyId} isLoggedIn={!!user} />
 }
 
 function WhiskeyDetailSkeleton() {
