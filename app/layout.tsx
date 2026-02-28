@@ -15,9 +15,37 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 })
 
+const siteName = "hitokuchi"
+const defaultTitle = `${siteName} - ウイスキーレビュー`
+const description = "ウイスキーをひとくち、感想をひとこと。"
+
 export const metadata: Metadata = {
-  title: "hitokuchi - ウイスキーレビュー",
-  description: "ウイスキーをひとくち、感想をひとこと。",
+  metadataBase: new URL(
+    process.env.VERCEL_PROJECT_PRODUCTION_URL
+      ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`
+      : "http://localhost:3000",
+  ),
+  title: {
+    default: defaultTitle,
+    template: `%s | ${siteName}`,
+  },
+  description,
+  openGraph: {
+    type: "website",
+    siteName,
+    title: defaultTitle,
+    description,
+    locale: "ja_JP",
+  },
+  twitter: {
+    card: "summary",
+    title: defaultTitle,
+    description,
+  },
+  robots: {
+    index: true,
+    follow: true,
+  },
 }
 
 export default function RootLayout({
